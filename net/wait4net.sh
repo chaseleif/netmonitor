@@ -15,7 +15,11 @@ printtime() {
   # the current time
   total=$(date "+%s")
   # if less than 10 seconds have elapsed, exit this script
-  [ $((total-lastbreak)) -lt 10 ] && printf "Aborted\n" && exit
+  if [ $((total-lastbreak)) -lt 10 ] ; then
+    printf "Aborted\n"
+    stty echoctl
+    exit
+  fi
   # if we have called this function before clear the previous output
   [ "$lastbreak" -gt 0 ] && printf '\e[A\e[K'
   # set the lastbreak to the current timestamp
@@ -36,21 +40,26 @@ start=$(date "+%s")
 url="ifconfig.me"
 
 # print usage, ctrl-c can be used to print the elapsed time or quit early
-echo "###
+cat <<EOF
+###
 # Press ctrl-c to print the current elapsed time
 # Press ctrl-c twice within 10 seconds to quit
 ###
-"
+EOF
 
-# print the timestamp and wait for curl to succeed
 date
 printf "\nWaiting for network . . .\n"
 touch "$tmpfile"
 
 abort() {
+  stty echoctl
+  # kill curl if it is running
   [ -n "$curl_pid" ] && kill -SIGTERM "$curl_pid" >/dev/null 2>&1
+  # remove our tmpfile
   rm -f "$tmpfile"
+  # remove SIGTERM trap
   trap - SIGTERM
+  # resend SIGTERM
   kill -SIGTERM "$BASHPID"
 }
 trap 'abort' SIGTERM
@@ -78,3 +87,4 @@ total=$(($(date "+%s")-start))
 printf "Network up !\n\nTotal elapsed time: %s\n" \
         "$(./util/secs2text.sh "$total")"
 date
+stty echoctl

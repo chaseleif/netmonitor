@@ -1,0 +1,18 @@
+#!/sbin/openrc-run
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+name="netmonitor daemon"
+description="Network monitor and outage logger"
+command="@PWD@/runopenrc.sh"
+command_args=""
+command_background=true
+command_user="@USER@:@GROUP@"
+pidfile="/run/${RC_SVCNAME}.pid"
+command_background="yes"
+
+depend() {
+  need net
+  use dns logger
+}
+
