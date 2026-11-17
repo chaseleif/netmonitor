@@ -1,3 +1,5 @@
-lastip
 pid
-outages
+outages.log
+ip/ipaction.py
+ip/indices
+ip/lastip
