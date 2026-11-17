@@ -1,5 +1,12 @@
 #! /usr/bin/env bash
 
+if [ -n "$1" ] ; then
+  tmpfile="$1"
+  shift
+else
+  tmpfile="wait4net.tmp"
+fi
+
 # the time of the last break (ctrl-c)
 lastbreak=0
 
@@ -16,7 +23,7 @@ printtime() {
   # set total to the the total time elapsed since the start
   total=$((total-start))
   # print the elapsed time
-  echo "Elapsed time: $(./util/secs2text.sh $total)"
+  printf "Elapsed time: %s\n" "$(./util/secs2text.sh $total)"
 }
 # don't echo ctrl characters and trap on ctrl-c to the printtime function
 stty -echoctl
@@ -38,14 +45,28 @@ echo "###
 # print the timestamp and wait for curl to succeed
 date
 printf "\nWaiting for network . . .\n"
+touch "$tmpfile"
+
+abort() {
+  [ -n "$curl_pid" ] && kill -SIGTERM "$curl_pid" >/dev/null 2>&1
+  rm -f "$tmpfile"
+  trap - SIGTERM
+  kill -SIGTERM "$BASHPID"
+}
+trap 'abort' SIGTERM
+
 while true ; do
   # try to get a response from curl
-  addr="$(curl --no-fail --connect-timeout 20 "$url" 2> /dev/null)"
-  # if we have text, print the text and exit the loop
-  [ -n "$addr" ] && printf "\n%s ~ " "$addr" && break
-  # if no text was received, pause and restart the loop
-  sleep 1
+  curl --no-fail --connect-timeout 20 "$url" >"$tmpfile" 2>/dev/null &
+  curl_pid="$!"
+  wait "$curl_pid"
+  curl_pid=
+  if [ -s "$tmpfile" ] ; then
+    printf "\n~ %s\n" "$(cat "$tmpfile")"
+    break
+  fi
 done
+rm -f "$tmpfile"
 
 # set the total elapsed time
 total=$(($(date "+%s")-start))
@@ -54,7 +75,6 @@ total=$(($(date "+%s")-start))
 [ "$lastbreak" -gt 0 ] && printf '\e[A\e[K'
 
 # print the total elapsed time waiting for the network
-printf "Network up !\n\nTotal elapsed time: "
-./util/secs2text.sh "$total"
+printf "Network up !\n\nTotal elapsed time: %s\n" \
+        "$(./util/secs2text.sh "$total")"
 date
-
