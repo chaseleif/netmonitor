@@ -8,3 +8,4 @@ sed -i "s/@USER@/$USER/g" netmonitor
 group="$(id -gn "${USER}" 2>/dev/null)"
 [ -n "$group" ] || group="nobody"
 sed -i "s/@GROUP@/$group/g" netmonitor
+chmod 755 netmonitor
