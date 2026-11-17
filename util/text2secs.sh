@@ -2,19 +2,24 @@
 
 # handle either command-line arguments or text pipe
 if [[ "${*}" ]] ; then
-  # gather command-line arguments into the array 'arg'
-  while read -r arg ; do
-    args[${#args[@]}]="$arg"
-  done < <(printf '%s\n' "${@}")
+  : # we have command-line arguments already
 elif [[ ! -t 0 ]] ; then
   # gather pipe into the array 'arg'
   read -ra args
+  # treat args as command-line arguments
+  set -- "${args[@]}"
 fi
 
+numba=0
+seconds=0
 # for each argument, numbers are preceded by their type
-for arg in "${args[@]}" ; do
-  # numbers are preceded by their type, store the number when encountered
+while (( $# )) ; do
+  arg="$1"
+  shift
+  # 1 week, 5 minutes
+  # numbers precede their type, store the number when encountered
   # when the type is encountered increment seconds by the type
+  # types may end in an s and may have a trailing comma
   if [[ "$arg" =~ ^[1-9][0-9]*$ ]] ; then
     numba="$arg"
   elif [[ "$arg" =~ ^week[s]?[,]?$ ]] ; then
@@ -31,5 +36,4 @@ for arg in "${args[@]}" ; do
 done
 
 # print the number of seconds
-echo "$seconds"
-
+printf "%d\n" "$seconds"

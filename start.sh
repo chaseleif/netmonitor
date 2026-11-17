@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 (
-  nice -n 19 ./net/netmon.sh >> outages 2>&1 &
+  cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" || exit 1
+  nice -n 19 ./net/netmon.sh outages.log &
   echo "$!" > pid
 )
-
