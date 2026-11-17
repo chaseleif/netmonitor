@@ -4,7 +4,7 @@
 
 name="netmonitor daemon"
 description="Network monitor and outage logger"
-command="@PWD@/runopenrc.sh"
+command="@PWD@/run.sh"
 command_args=""
 command_background=true
 command_user="@USER@:@GROUP@"

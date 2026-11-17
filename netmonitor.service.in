@@ -1,14 +1,12 @@
 [Unit]
 Description=Network monitor and outage logger
-
 After=syslog.target
 
 [Service]
-Type=forking
-ExecStart="@PWD@/runsystemd.sh"
-PIDFile="@PWD@/pid"
+Type=exec
+ExecStart="@PWD@/run.sh"
 User=@USER@
 Group=systemd-journal
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

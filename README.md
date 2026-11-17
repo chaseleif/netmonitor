@@ -7,6 +7,7 @@ ___
 ___
 #### Scripts
 
+- run.sh -- launcher script for init service
 - ip/ipmon.py -- tracks IP changes
   - returns failure if can't get current public IP
   - returns the exit code of ip/ipaction.py based on current IP
@@ -28,7 +29,7 @@ ___
 2 service files are provided, `netmonitor.in` and `netmonitor.service.in`,
 for openrc and systemd, respectively.
 
-The script is intended to run as a normal user.
+The script is intended to run as a normal user, i.e., your user.
 
 Clone this repository to its installed location, for example:
 ```bash
@@ -59,13 +60,19 @@ sudo rc-service netmonitor status
 
 **NOTE:** enable is to automatically start in the future
 
-The init script will run `runopenrc.sh` or `runsystemd.sh`,
-depending on the system used.
+The init script will run `run.sh` from its directory.
 
 ___
-#### Logs and PID
+#### Logs
 
-The init script records outages in `outages.log` in the same directory as the `run*.sh` script.
+Outages are recorded in `outages.log` in the same directory as `run.sh`.
 
-The pid file's location is described in the respective init file.
+Using `net/netmon.sh`, `run.sh` records in `outages.log`
+- when the script starts and is killed
+- when an outage starts and when it ends
+- the duration of the current outage and the cumulative outage duration
 
+Total outage duration accumulates through the life of `outages.log`.
+
+On restart, the last line beginning with 'Total outages: '
+is used to restore the running total.
