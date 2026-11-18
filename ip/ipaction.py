@@ -18,11 +18,11 @@ subject = 'New IP'
   arguments for Popen: cmd, stdin, stdout, stderr
   arguments for Popen.communicate: input, timeout
 
-  returns tuple: (returncode, (stdout, stdin))
+  returns tuple: (returncode, (stdout, stderr))
 
-  stdout/stderr may be None
-  exceptions set returncode to 1
-  when returncode < 0 it is a signal
+  stdout/stderr may be None, otherwise are .encoded() strings
+  exceptions return (1, (None, str)) -- stderr from Exception
+  when returncode < 0, the process received a signal
     signal name = signal.Signals(-returncode).name
 '''
 def run(cmd, input, timeout, stdin, stdout, stderr):
@@ -32,9 +32,9 @@ def run(cmd, input, timeout, stdin, stdout, stderr):
   except Exception as e:
     proc.kill()
     if isinstance(e, TimeoutExpired):
-      return 1, (None, 'Command timed out')
+      return 1, (None, 'Command timed out'.encode())
     else:
-      return 1, (None, str(e))
+      return 1, (None, str(e).encode())
   return proc.returncode, output
 
 ''' mailip
