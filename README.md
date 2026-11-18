@@ -1,11 +1,7 @@
 # netmonitor
-### These scripts monitor network connectivity, outages, and IP address changes
 
 ___
-### Usage
-
-___
-#### Scripts
+#### Scripts -- monitor network connectivity, outages, and IP address changes
 
 - run.sh -- launcher script for init service
 - ip/ipmon.py -- tracks IP changes
@@ -13,17 +9,31 @@ ___
   - returns the exit code of ip/ipaction.py based on current IP
 - ip/ipaction.py -- performs an action based on an IP
   - customizable implementation
-  - can store previous IP, do some action based on whether it changed
-  - return value of `receivedip(ip)` indicates success of ipmon
+  - example usage provided to send an email when the IP address changes
+  - return value of `receivedip(ip)` indicates success to ipmon
 - net/netmon.sh -- monitor script, intended to be ran as a daemon
   - calls net/wait4net.sh on outage, tracks time of outages
   - calls ip/ipmon.py when outage ends
 - net/wait4net.sh -- attempts `curl` until the command succeeds
+  - useful as a standalone script, when waiting for connectivity to return
 - util/secs2text.sh -- converts numeric seconds to human-readable text
 - util/text2secs.sh -- converts human-readable text to numeric seconds
 
-`net/wait4net.sh` can be useful when waiting for connectivity to return
 ___
+### Usage as an IP monitor
+
+`ip/ipmon.py` can be set to run periodically, e.g., as a cron job.
+
+If it fails to get the current IP,
+or the action in ip/ipaction.py fails,
+then that run of the script will fail.
+
+Setting the run to be periodic (though not continuous)
+should be enough to, e.g., notify or track IP address changes.
+
+___
+### Usage as complete network and IP monitor
+
 #### Installation - openrc/systemd
 
 2 service files are provided, `netmonitor.in` and `netmonitor.service.in`,
@@ -58,7 +68,7 @@ sudo rc-update add netmonitor
 sudo rc-service netmonitor status
 ```
 
-**NOTE:** enable is to automatically start in the future
+**NOTE:** enable/add commands are to automatically start in the future
 
 The init script will run `run.sh` from its directory.
 
