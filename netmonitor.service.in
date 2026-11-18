@@ -1,6 +1,7 @@
 [Unit]
 Description=Network monitor and outage logger
-After=syslog.target
+After=network.target
+Wants=network-online.target
 
 [Service]
 Type=exec
@@ -9,4 +10,4 @@ User=@USER@
 Group=systemd-journal
 
 [Install]
-WantedBy=default.target
+WantedBy=network-online.target
