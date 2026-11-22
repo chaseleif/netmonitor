@@ -49,29 +49,26 @@ else
   totaloutage=0
 fi
 
-timer=0
+inoutage=0
 startoutage() {
-  printf " ~ Outage start: %s\n" "$(date)"
-  timer=1
-  # always returns "failure" to set $?
-  return 1
+  printf " ~ Outage start: %s\n" "$(date -d @"$outagestart")"
+  inoutage=1
 }
 
 endoutage() {
-  if [ "$timer" -eq 1 ] ; then
-    outage=$(($(date "+%s")-loopstart))
-    totaloutage=$((totaloutage+outage))
-    # log outage times
-    printf "This outage: %s\n" "$(./util/secs2text.sh "$outage")"
-    printf "Total outages: %s\n" "$(./util/secs2text.sh "$totaloutage")"
-    [ $# -eq 0 ] && printf " ~ Outage end: %s\n" "$(date)"
-    timer=0
-  fi
+  outage=$(($(date "+%s")-outagestart))
+  totaloutage=$((totaloutage+outage))
+  # log outage times
+  printf "This outage: %s\n" "$(./util/secs2text.sh "$outage")"
+  printf "Total outages: %s\n" "$(./util/secs2text.sh "$totaloutage")"
+  # when called from signal function the signal is passed
+  # don't print that the outage ended, the program is exiting
+  [ $# -eq 0 ] && printf " ~ Outage end: %s\n" "$(date)"
 }
 
 # log the signal to terminate or interrupt and exit
 signal() {
-  endoutage "signal"
+  [ "$inoutage" -eq 0 ] || endoutage "$1"
   printf " ~ Monitor received %s: %s\n" "$1" "$(date)"
   [ -n "$bg_process" ] && kill -SIGTERM "$bg_process" >/dev/null 2>&1
   exit
@@ -82,11 +79,12 @@ trap 'signal SIGINT' SIGINT
 # begin monitoring connectivity
 printf " ~ Monitor starting: %s\n" "$(date)"
 while true ; do
-  loopstart="$(date "+%s")"
   # sleep for 60-120 seconds
   await sleep "$((RANDOM%61+60))"
   # if we can ping restart the loop
   try_ping && continue
+  # an outage would have started sometime in the past couple of minutes
+  outagestart="$(date "+%s")"
   # sleep for 30-60 seconds
   await sleep "$((RANDOM%31+30))"
   # if we can ping restart the loop
@@ -98,12 +96,15 @@ while true ; do
   # we are in an outage
   startoutage
   # wait for the network to come back up
-  while [ "$?" -ne 0 ] ; do
+  while [ "$inoutage" -ne 0 ] ; do
     # this script will not exit until a (likely) successful net connection
-    ./net/wait4net.sh >/dev/null 2>&1
-    # call the script to determine+handle if our ip changed
-    # this script can exit with failure to restart the loop
-    python3 -B ip/ipmon.py
+    if await ./net/wait4net.sh >/dev/null 2>&1 ; then
+      # call the script to determine+handle if our ip changed
+      # this script can exit with failure to restart the loop
+      if await python3 -B ip/ipmon.py ; then
+        break
+      fi
+    fi
   done
   # the outage has ended
   endoutage

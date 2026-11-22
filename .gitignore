@@ -3,3 +3,4 @@ outages.log
 ip/ipaction.py
 ip/indices
 ip/lastip
+**.swp

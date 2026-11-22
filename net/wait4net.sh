@@ -12,6 +12,11 @@ lastbreak=0
 
 # this function is called on ctrl-c
 printtime() {
+  # if stdout is not a terminal exit on signal
+  if [ ! -t 1 ] ; then
+    stty echoctl
+    exit
+  fi
   # the current time
   total=$(date "+%s")
   # if less than 10 seconds have elapsed, exit this script
